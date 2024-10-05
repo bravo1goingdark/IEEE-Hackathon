@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbon Footprint Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Function to calculate total emissions
+        function calculateEmissions(event) {
+            event.preventDefault(); // Prevent form submission
+
+            // Get values from inputs
+            const energy = parseFloat(document.getElementById('energy').value) || 0; // kWh
+            const food = parseFloat(document.getElementById('food').value) || 0; // kg
+            const waste = parseFloat(document.getElementById('waste').value) || 0; // kg
+            const goods = parseFloat(document.getElementById('goods').value) || 0; // ₹
+            const transport = parseFloat(document.getElementById('transport').value) || 0; // km
+
+            // Define emission factors (example values)
+            const energyEmissionFactor = 0.5; // kg CO2/kWh
+            const foodEmissionFactor = 2.5; // kg CO2/kg
+            const wasteEmissionFactor = 1.2; // kg CO2/kg
+            const transportEmissionFactor = 0.2; // kg CO2/km
+            const goodsEmissionFactor = 0.05; // kg CO2/₹ spent
+
+            // Calculate total emissions
+            const totalEmissions = 
+                (energy * energyEmissionFactor) +
+                (food * foodEmissionFactor) +
+                (waste * wasteEmissionFactor) +
+                (transport * transportEmissionFactor) +
+                (goods * goodsEmissionFactor);
+
+            // Display the result
+            document.querySelector('.result').innerText =` Total Carbon Emissions: ${totalEmissions.toFixed(2)} kg CO2`;
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Carbon Footprint Calculator</h1>
+        <form id="carbonForm" onsubmit="calculateEmissions(event)">
+            <!-- Energy Consumption -->
+            <div class="form-group">
+                <label for="energy">Energy Consumption (kWh/month):</label>
+                <input type="number" id="energy" name="energy" placeholder="Enter your monthly electricity usage" required>
+            </div>
+
+            <!-- Food Consumption -->
+            <div class="form-group">
+                <label for="food">Food Consumption (kg/month):</label>
+                <input type="number" id="food" name="food" placeholder="Enter average food consumption" required>
+            </div>
+
+            <!-- Waste Production -->
+            <div class="form-group">
+                <label for="waste">Waste Production (kg/month):</label>
+                <input type="number" id="waste" name="waste" placeholder="Enter waste production" required>
+            </div>
+
+            <!-- Goods & Services -->
+            <div class="form-group">
+                <label for="goods">Goods & Services Expenditure (₹/month):</label>
+                <input type="number" id="goods" name="goods" placeholder="Enter monthly goods/services expenses" required>
+            </div>
+
+            <!-- Transportation -->
+            <div class="form-group">
+                <label for="transport">Transportation (km/month):</label>
+                <input type="number" id="transport" name="transport" placeholder="Enter distance traveled by car" required>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-group">
+                <button type="submit" id="calculate">Calculate Carbon Footprint</button>
+            </div>
+
+            <div class="result"></div>
+        </form>
+    </div>
+</body>
+</html>

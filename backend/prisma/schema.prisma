@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int               @id @default(autoincrement())
+  email            String            @unique
+  name             String
+  type             UserType          @default(INDIVIDUAL) // 'INDIVIDUAL' or 'BUSINESS'
+  footprintRecords FootprintRecord[] // One user can have multiple footprint records
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model FootprintRecord {
+  id                Int                 @id @default(autoincrement())
+  userId            Int
+  user              User                @relation(fields: [userId], references: [id])
+  energyConsumption EnergyConsumption[] // A record can have multiple energy consumptions
+  transportation    Transportation[] // A record can have multiple transportation entries
+  foodConsumption   FoodConsumption[] // A record can have multiple food consumption entries
+  wasteProduction   WasteProduction[] // A record can have multiple waste production entries
+  goodsServices     GoodsServices[] // A record can have multiple goods and services entries
+  totalEmissions    Float // Total carbon emissions for this record (kgCO2e)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+// Energy Consumption Model (kWh)
+model EnergyConsumption {
+  id                Int             @id @default(autoincrement())
+  footprintRecordId Int
+  footprintRecord   FootprintRecord @relation(fields: [footprintRecordId], references: [id])
+  electricityKwh    Float // Electricity consumed in kWh
+  naturalGasKwh     Float // Natural gas consumed in kWh
+  emissionAmount    Float // Emissions from energy consumption in kgCO2e
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+// Transportation Model (km)
+model Transportation {
+  id                Int             @id @default(autoincrement())
+  footprintRecordId Int
+  footprintRecord   FootprintRecord @relation(fields: [footprintRecordId], references: [id])
+  vehicleType       VehicleType // Car, Bus, Train, etc.
+  distanceKm        Float // Distance traveled in kilometers
+  emissionAmount    Float // Emissions from transportation in kgCO2e
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+// Food Consumption Model (kg)
+model FoodConsumption {
+  id                Int             @id @default(autoincrement())
+  footprintRecordId Int
+  footprintRecord   FootprintRecord @relation(fields: [footprintRecordId], references: [id])
+  foodType          FoodType // Meat, Dairy, Vegetables, etc.
+  amountKg          Float // Amount of food consumed in kilograms
+  emissionAmount    Float // Emissions from food consumption in kgCO2e
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+// Waste Production Model (kg)
+model WasteProduction {
+  id                Int             @id @default(autoincrement())
+  footprintRecordId Int
+  footprintRecord   FootprintRecord @relation(fields: [footprintRecordId], references: [id])
+  wasteType         WasteType // Paper, Plastic, Organic, etc.
+  amountKg          Float // Amount of waste produced in kilograms
+  emissionAmount    Float // Emissions from waste production in kgCO2e
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+// Goods & Services Model (Currency-based emissions)
+model GoodsServices {
+  id                Int             @id @default(autoincrement())
+  footprintRecordId Int
+  footprintRecord   FootprintRecord @relation(fields: [footprintRecordId], references: [id])
+  category          GoodsCategory // Clothing, Electronics, etc.
+  noOfUnit          Int // Amount spent in currency (USD, EUR, etc.)
+  emissionAmount    Float // Emissions from goods and services (kgCO2e)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+// Enums for various models
+enum VehicleType {
+  CAR
+  BUS
+  TRAIN
+  PLANE
+  BIKE
+}
+
+enum FoodType {
+  MEAT
+  DAIRY
+  VEGETABLES
+  GRAINS
+  OTHER
+}
+
+enum WasteType {
+  PAPER
+  PLASTIC
+  ORGANIC
+  GLASS
+  METAL
+}
+
+enum GoodsCategory {
+  CLOTHING
+  ELECTRONICS
+  FURNITURE
+  OTHER
+}
+
+enum UserType {
+  INDIVIDUAL
+  BUSINESS
+}
