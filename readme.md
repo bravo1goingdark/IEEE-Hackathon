@@ -2,6 +2,10 @@
 
 Welcome to the *AI-Powered Carbon Footprint Tracker* repository, developed for the IEEE Hackathon. This project leverages AI and machine learning to help individuals and businesses track and reduce their carbon emissions in real-time.
 
+## Links
+ video-link : https://drive.google.com/file/d/1Rk5DLed74wyYvAcLcFMdpu2P_BCkl7sf/view?usp=sharing
+ pdf-link : https://docs.google.com/presentation/d/1_UOyPvVQGn8UxzKexnhWCfIW5ImEI3nu/edit?usp=sharing&ouid=100120393893229249001&rtpof=true&sd=true
+
 ## Project Overview
 
 Climate change is one of the most pressing issues of our time, and reducing carbon emissions is crucial for mitigating its effects. Our AI-powered application provides a solution by allowing users to monitor their carbon footprint across various activities such as home energy consumption, transportation, food choices, and waste management. With real-time tracking and personalized insights, users can take actionable steps to reduce their carbon emissions.
