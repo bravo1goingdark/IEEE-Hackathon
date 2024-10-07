@@ -1,150 +1,90 @@
-import express from 'express';
-import { PrismaClient } from '@prisma/client';
-
-const carbonRouter = express();
+// server.ts
+import { PrismaClient } from "@prisma/client";
+import { Router } from "express";
+import { calculateEmissions} from "../utils/carbon.js";
+const carbonRouter = Router();
 const prisma = new PrismaClient();
 
-carbonRouter.post("/user/create" , async  (req , res) => {
-    
-    try {
-        const {name , email} = req.body;
-        const doesExist = await prisma.user.findFirst({
-            where :{
-                email
-            }
-        })
+carbonRouter.post("/create", async (req, res) => {
+  const { email } = req.body;
 
-        if (doesExist) {
-            return res.status(400).json({
-                msg : "user with this email already exist"
-            })
-        }
-        const newUser = await prisma.user.create({
-            data : {
-                name ,
-                email
-            }
-        })
+  const newUser = await prisma.user.create({
+    data: {
+      email,
+    },
+  });
 
-        if (newUser) {
-            return res.status(201).json({
-                name : newUser.name ,
-                email : newUser.email,
-                userID : newUser.id
-            });
-        }
-    } catch (error) {
-        if (error) {
-            return res.status(400).json({
-                msg : "server error"
-            })
-        }
-    }
-})
-
-
-
-carbonRouter.post('/users/:userId/footprint-records', async (req, res) => {
-    const { userId } = req.params;
-    const { energyConsumption, transportation, foodConsumption, wasteProduction, goodsServices } = req.body;
-  
-    try {
-        // Check if the user exists
-        const user = await prisma.user.findUnique({
-            where: { id: parseInt(userId) },
-        });
-  
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-  
-        // Calculate total emissions
-        const totalEnergyEmissions = energyConsumption.reduce((total, ec) => {
-            const emissionAmount = (ec.electricityKwh * 0.39) + (ec.naturalGasKwh * 2.98);
-            total += emissionAmount;
-            return total;
-        }, 0);
-
-        const totalTransportEmissions = transportation.reduce((total, tr) => {
-            const emissionAmount = tr.distanceKm * 0.154;
-            total += emissionAmount;
-            return total;
-        }, 0);
-
-        const totalFoodEmissions = foodConsumption.reduce((total, fc) => {
-            const emissionAmount = fc.amountKg * 0.72;
-            total += emissionAmount;
-            return total;
-        }, 0);
-
-        const totalWasteEmissions = wasteProduction.reduce((total, wp) => {
-            const emissionAmount = wp.amountKg * 0.5;
-            total += emissionAmount;
-            return total;
-        }, 0);
-
-        const totalGoodsEmissions = goodsServices.reduce((total, gs) => {
-            const emissionAmount = gs.noOfUnit * 200;
-            total += emissionAmount;
-            return total;
-        }, 0);
-  
-        const totalEmissions = totalEnergyEmissions + totalTransportEmissions + totalFoodEmissions + totalWasteEmissions + totalGoodsEmissions;
-
-        // Create footprint record
-        const footprintRecord = await prisma.footprintRecord.create({
-            data: {
-                user: { connect: { id: parseInt(userId) } },
-                totalEmissions,
-                energyConsumption: {
-                    create: energyConsumption.map(ec => ({
-                        electricityKwh: ec.electricityKwh,
-                        naturalGasKwh: ec.naturalGasKwh,
-                        emissionAmount: (ec.electricityKwh * 0.39) + (ec.naturalGasKwh * 2.98), // Calculate emission amount
-                    })),
-                },
-                transportation: {
-                    create: transportation.map(tr => ({
-                        vehicleType: tr.vehicleType,
-                        distanceKm: tr.distanceKm,
-                        emissionAmount: tr.distanceKm * 0.154, // Calculate emission amount
-                    })),
-                },
-                foodConsumption: {
-                    create: foodConsumption.map(fc => ({
-                        foodType: fc.foodType,
-                        amountKg: fc.amountKg,
-                        emissionAmount: fc.amountKg * 0.7, // Calculate emission amount
-                    })),
-                },
-                wasteProduction: {
-                    create: wasteProduction.map(wp => ({
-                        wasteType: wp.wasteType,
-                        amountKg: wp.amountKg,
-                        emissionAmount: wp.amountKg * 0.5, // Calculate emission amount
-                    })),
-                },
-                goodsServices: {
-                    create: goodsServices.map(gs => ({
-                        category: gs.category,
-                        noOfUnit: gs.noOfUnit,
-                        emissionAmount: gs.noOfUnit * 200, // Calculate emission amount
-                    })),
-                },
-            },
-        });
-
-        res.status(201).json({
-            message: "Footprint record created successfully",
-            footprintRecord,
-        });
-  
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
+  return res.json({
+    msg : "success",
+    email : newUser.email,
+    id : newUser.id
+  })
 });
 
-  
+carbonRouter.post("/calculate/:userID", async (req, res) => {
+  console.log(req.body);
+  const {
+    electricityConsumption,
+    gasConsumption,
+    publicTransport,
+    privateTransport,
+    foodConsumption,
+    wasteProduction,
+    goodsServices,
+  } = req.body;
+  const {userID} = req.params;
+
+  await prisma.user.update({
+    where: { id: parseInt(userID) },
+    data: {
+      electricityConsumption,
+      gasConsumption,
+      publicTransport: {
+        create: publicTransport.map((t) => ({
+          type: "PUBLIC",
+          distance: t.distance,
+        })),
+      },
+      privateTransport: {
+        create: privateTransport.map((t) => ({
+          type: t.type.toUpperCase(),
+          distance: t.distance,
+        })),
+      },
+      foodConsumption: {
+        create: foodConsumption.map((f) => ({
+          type: f.type,
+          amount: f.amount,
+        })),
+      },
+      wasteProduction: {
+        create: wasteProduction.map((w) => ({
+          type: w.type,
+          amount: w.amount,
+        })),
+      },
+      goodsServices: {
+        create: goodsServices.map((g) => ({
+          category: g.category,
+          noOfUnit: g.noOfUnit,
+        })),
+      },
+    },
+  });
+
+
+  const totalEmissions = await calculateEmissions(req.body);
+
+
+  await prisma.user.update({
+    where: { id: parseInt(userID) },
+    data: {
+      totalEmissions,
+    },
+  });
+
+  return res.status(200).json({ totalEmissions });
+});
 
 
 export default carbonRouter;
